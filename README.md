@@ -1,261 +1,229 @@
-# AlphaRotate: A Rotation Detection Benchmark using TensorFlow
+# RotationDetection (AlphaRotate fork)
 
-[![Documentation Status](https://readthedocs.org/projects/rotationdetection/badge/?version=latest)](https://rotationdetection.readthedocs.io/en/latest/?badge=latest)
-[![PyPI](https://badge.fury.io/py/alpharotate.svg)](https://badge.fury.io/py/alpharotate)
-[![Downloads](https://pepy.tech/badge/alpharotate)](https://pepy.tech/project/alpharotate)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/yangxue0827/RotationDetection.svg)](https://github.com/yangxue0827/RotationDetection/issues)
-[![Percentage of issues still open](https://isitmaintained.com/badge/open/yangxue0827/RotationDetection.svg)](https://github.com/yangxue0827/RotationDetection/issues)
+> A preserved fork of **AlphaRotate**, a TensorFlow 1.x benchmark for rotated (arbitrary-oriented) object detection,
+> reorganized and documented so it can be understood without reading every file.
 
-<!-- Documentation: [https://rotationdetection.readthedocs.io/](https://rotationdetection.readthedocs.io/) -->
+| | |
+|---|---|
+| **Project origin** | Other: fork of a third-party open-source research codebase (see [Project Context](#project-context)) |
+| **Upstream** | [`yangxue0827/RotationDetection`](https://github.com/yangxue0827/RotationDetection), AlphaRotate v1.0.1 |
+| **Original authors** | Xue Yang, Yue Zhou, Junchi Yan and contributors (Shanghai Jiao Tong University) |
+| **Language / framework** | Python 3, TensorFlow 1.13 (`tf.contrib.slim`), Cython, CUDA C++ |
+| **License** | [Apache License 2.0](./LICENSE) (unchanged) |
+| **Last upstream commit in this fork** | `6adfd2d`, 2022-08-03 ("add bcd") |
 
- <!-- :rocket::rocket::rocket:	**News:** The MMDetection version cooperating with MMLab will be released soon, stay tuned.:rocket::rocket::rocket: -->
- :rocket::rocket::rocket:	**News:** MMRotate has been released at https://github.com/open-mmlab/mmrotate <img src="https://img.shields.io/github/stars/open-mmlab/mmrotate?style=social" /> :rocket::rocket::rocket:
+---
 
-## Abstract
-[AlphaRotate](https://yangxue0827.github.io/files/alpharotate_yx.pdf) is mainly maintained by [Xue Yang](https://yangxue0827.github.io/) with Shanghai Jiao Tong University supervised by [Prof. Junchi Yan](http://thinklab.sjtu.edu.cn/).
+## Project Overview
 
-**Papers and codes related to remote sensing/aerial image detection: [DOTA-DOAI](https://github.com/SJTU-Thinklab-Det/DOTA-DOAI) <img src="https://img.shields.io/github/stars/SJTU-Thinklab-Det/DOTA-DOAI?style=social" />.**      
+Most object detectors predict **horizontal** boxes `(x1, y1, x2, y2)`. Many real scenes (aerial and satellite imagery,
+scene text, ships in SAR images, faces, retail shelves) contain objects at **arbitrary orientations**. For those objects
+a rotated box `(x, y, w, h, θ)` or a quadrilateral fits much better.
 
-Techniques:
-- [x] Dataset: DOTA, HRSC2016, ICDAR2015, ICDAR2017 MLT, MSRA-TD500, UCAS-AOD, FDDB, OHD-SJTU, SSDD++, Total-Text
-- [x] Baackbone: [ResNet](https://arxiv.org/abs/1512.03385), [MobileNetV2](https://arxiv.org/abs/1801.04381), [EfficientNet](https://arxiv.org/abs/1905.11946), [DarkNet53](https://arxiv.org/abs/1506.02640)
-- [x] Neck: [FPN](https://arxiv.org/abs/1708.02002), [BiFPN](https://arxiv.org/abs/1911.09070)
-- [x] Detectors: 
-  - [x] [R<sup>2</sup>CNN (Faster-RCNN-H)](https://arxiv.org/abs/1706.09579): [R2CNN_Faster-RCNN_Tensorflow](https://github.com/DetectionTeamUCAS/R2CNN_Faster-RCNN_Tensorflow) <img src="https://img.shields.io/github/stars/DetectionTeamUCAS/R2CNN_Faster-RCNN_Tensorflow?style=social" />, [DOTA-DOAI](https://github.com/SJTU-Thinklab-Det/DOTA-DOAI) <img src="https://img.shields.io/github/stars/SJTU-Thinklab-Det/DOTA-DOAI?style=social" />, [R2CNN_FPN_Tensorflow (Deprecated)](https://github.com/yangxue0827/R2CNN_FPN_Tensorflow) <img src="https://img.shields.io/github/stars/yangxue0827/R2CNN_FPN_Tensorflow?style=social" />
-  - [x] [Double Head](https://openaccess.thecvf.com/content_CVPR_2020/html/Wu_Rethinking_Classification_and_Localization_for_Object_Detection_CVPR_2020_paper.html)
-  - [x] [RRPN (Faster-RCNN-R)](https://arxiv.org/pdf/1703.01086): [TF code](https://github.com/DetectionTeamUCAS/RRPN_Faster-RCNN_Tensorflow) <img src="https://img.shields.io/github/stars/DetectionTeamUCAS/RRPN_Faster-RCNN_Tensorflow?style=social" />
-  - [x] [SCRDet **(ICCV19)**](https://arxiv.org/abs/1811.07126): [R<sup>2</sup>CNN++](https://github.com/DetectionTeamUCAS/R2CNN-Plus-Plus_Tensorflow) <img src="https://img.shields.io/github/stars/DetectionTeamUCAS/R2CNN-Plus-Plus_Tensorflow?style=social" />, [IoU-Smooth L1 Loss](https://github.com/DetectionTeamUCAS/RetinaNet_Tensorflow_Rotation) <img src="https://img.shields.io/github/stars/DetectionTeamUCAS/RetinaNet_Tensorflow_Rotation?style=social" />
-  - [x] [RetinaNet-H, RetinaNet-R](https://arxiv.org/abs/1908.05612): [TF code](https://github.com/DetectionTeamUCAS/RetinaNet_Tensorflow_Rotation) <img src="https://img.shields.io/github/stars/DetectionTeamUCAS/RetinaNet_Tensorflow_Rotation?style=social" />
-  - [x] [RefineRetinaNet (CascadeRetinaNet)](https://arxiv.org/abs/1908.05612)
-  - [x] [ATSS](https://arxiv.org/abs/1912.02424)
-  - [x] [FCOS](https://arxiv.org/abs/1904.01355)
-  - [x] [RSDet **(AAAI21)**](https://ojs.aaai.org/index.php/AAAI/article/view/16347): [TF code](https://github.com/Mrqianduoduo/RSDet-8P-4R) <img src="https://img.shields.io/github/stars/Mrqianduoduo/RSDet-8P-4R?style=social" />
-  - [x] [RSDet++ **(FCOS-RSDet)**](https://arxiv.org/abs/2109.11906) 
-  - [x] [R<sup>3</sup>Det **(AAAI21)**](https://arxiv.org/abs/1908.05612): [TF code](https://github.com/Thinklab-SJTU/R3Det_Tensorflow) <img src="https://img.shields.io/github/stars/Thinklab-SJTU/R3Det_Tensorflow?style=social" />, [Pytorch code1](https://github.com/SJTU-Thinklab-Det/r3det-on-mmdetection) <img src="https://img.shields.io/github/stars/SJTU-Thinklab-Det/r3det-on-mmdetection?style=social" />, [Pytorch code2](https://github.com/SJTU-Thinklab-Det/r3det-pytorch) <img src="https://img.shields.io/github/stars/SJTU-Thinklab-Det/r3det-pytorch?style=social" />, [Pytorch code3](https://github.com/open-mmlab/mmrotate) <img src="https://img.shields.io/github/stars/open-mmlab/mmrotate?style=social" />
-  - [x] [Circular Smooth Label (CSL, **ECCV20**)](https://arxiv.org/abs/2003.05597): [TF code](https://github.com/Thinklab-SJTU/CSL_RetinaNet_Tensorflow) <img src="https://img.shields.io/github/stars/Thinklab-SJTU/CSL_RetinaNet_Tensorflow?style=social" />, [Pytorch code](https://github.com/open-mmlab/mmrotate) <img src="https://img.shields.io/github/stars/open-mmlab/mmrotate?style=social" />
-  - [x] [Densely Coded Label (DCL, **CVPR21**)](https://arxiv.org/abs/2011.09670): [TF code](https://github.com/Thinklab-SJTU/DCL_RetinaNet_Tensorflow) <img src="https://img.shields.io/github/stars/Thinklab-SJTU/DCL_RetinaNet_Tensorflow?style=social" />
-  - [x] [GWD (**ICML21**)](https://arxiv.org/abs/2101.11952): [Pytorch code](https://github.com/open-mmlab/mmrotate) <img src="https://img.shields.io/github/stars/open-mmlab/mmrotate?style=social" />
-  - [x] BCD (**TPAMI22**)
-  - [x] [KLD **(NeurIPS21)**](https://arxiv.org/abs/2106.01883): [Pytorch code](https://github.com/open-mmlab/mmrotate) <img src="https://img.shields.io/github/stars/open-mmlab/mmrotate?style=social" />
-  - [x] [RIDet **(GRSL)**](https://arxiv.org/abs/2103.11636): [Pytorch code](https://github.com/ming71/RIDet) <img src="https://img.shields.io/github/stars/ming71/RIDet?style=social" />
-  - [x] [KFIoU](https://arxiv.org/abs/2201.12558): [Pytorch code](https://github.com/open-mmlab/mmrotate) <img src="https://img.shields.io/github/stars/open-mmlab/mmrotate?style=social" />
-  - [x] Mixed method: R<sup>3</sup>Det-DCL, R<sup>3</sup>Det-GWD, R<sup>3</sup>Det-BCD, R<sup>3</sup>Det-KLD, FCOS-RSDet, R<sup>2</sup>CNN-BCD, R<sup>2</sup>CNN-KF
-- [x] Loss: CE, [Focal Loss](https://arxiv.org/abs/1708.02002), [Smooth L1 Loss](https://arxiv.org/abs/1504.08083), [IoU-Smooth L1 Loss](https://arxiv.org/abs/1811.07126), [Modulated Loss](https://arxiv.org/abs/1911.08299)
-- [x] [Others](./OTHERS.md): [SWA](https://arxiv.org/pdf/2012.12645.pdf), exportPb, [MMdnn](https://github.com/Microsoft/MMdnn)
+This repository contains a full benchmark for that task. It includes:
 
-The above-mentioned rotation detectors are all modified based on the following horizontal detectors:
-- Faster RCNN: [TF code](https://github.com/DetectionTeamUCAS/Faster-RCNN_Tensorflow) <img src="https://img.shields.io/github/stars/DetectionTeamUCAS/Faster-RCNN_Tensorflow?style=social" />
-- R-FCN: [TF code](https://github.com/DetectionTeamUCAS/R-FCN_Tensorflow) <img src="https://img.shields.io/github/stars/DetectionTeamUCAS/R-FCN_Tensorflow?style=social" />
-- FPN: [TF code1](https://github.com/DetectionTeamUCAS/FPN_Tensorflow) <img src="https://img.shields.io/github/stars/DetectionTeamUCAS/FPN_Tensorflow?style=social" />, [TF code2 (Deprecated)](https://github.com/yangxue0827/FPN_Tensorflow) <img src="https://img.shields.io/github/stars/yangxue0827/FPN_Tensorflow?style=social" />
-- Cascade RCNN: [TF code](https://github.com/DetectionTeamUCAS/Cascade-RCNN_Tensorflow) <img src="https://img.shields.io/github/stars/DetectionTeamUCAS/Cascade-RCNN_Tensorflow?style=social" />
-- Cascade FPN RCNN: [TF code](https://github.com/DetectionTeamUCAS/Cascade_FPN_Tensorflow) <img src="https://img.shields.io/github/stars/DetectionTeamUCAS/Cascade_FPN_Tensorflow?style=social" /> 
-- RetinaNet: [TF code](https://github.com/DetectionTeamUCAS/RetinaNet_Tensorflow) <img src="https://img.shields.io/github/stars/DetectionTeamUCAS/RetinaNet_Tensorflow?style=social" />
-- RefineDet: [MxNet code](https://github.com/DetectionTeamUCAS/RefineDet_MxNet) <img src="https://img.shields.io/github/stars/DetectionTeamUCAS/RefineDet_MxNet?style=social" />
-- FCOS: [TF code](https://github.com/DetectionTeamUCAS/FCOS_Tensorflow) <img src="https://img.shields.io/github/stars/DetectionTeamUCAS/FCOS_Tensorflow?style=social" />, [MxNet code](https://github.com/DetectionTeamUCAS/FCOS_GluonCV) <img src="https://img.shields.io/github/stars/DetectionTeamUCAS/FCOS_GluonCV?style=social" />
+- **24 detector implementations** (for example RetinaNet-H/R, R²CNN, RRPN, SCRDet, R³Det, CSL, DCL, GWD, KLD, KFIoU,
+  BCD, RSDet, RIDet, FCOS, ATSS, and hybrids such as R³Det-KLD).
+- **Interchangeable backbones**: ResNet (TF-slim, GluonCV-converted, PyTorch-converted), MobileNetV2, EfficientNet and DarkNet53.
+- **Necks**: FPN and BiFPN.
+- **207 experiment configuration files** across 11 datasets (DOTA 1.0/1.5/2.0, DIOR-R, HRSC2016, ICDAR2015, MLT,
+  MSRA-TD500, UCAS-AOD, FDDB, Total-Text).
+- **Dataset preparation, training, evaluation and visualization scripts**, plus custom CUDA/Cython kernels for rotated
+  IoU and rotated NMS.
 
-![3](./images/demo.gif)
+![AlphaRotate module overview](./images/projects.png)
 
-## Projects
-![0](./images/projects.png)
+*Module overview from the upstream project: data → backbone → detector → neck → anchor head → RoI extractor → bbox head → loss.*
 
-## Latest Performance
+## Project Context
 
-<!-- More results and trained models are available in the [MODEL_ZOO.md](MODEL_ZOO.md). -->
+**Confirmed (from the repository itself):**
 
-### DOTA (Task1)
-**Baseline**
+- All 51 commits in this repository were written by the upstream authors (`yangxue`: 48 commits, `erenzhou`: 3 commits),
+  between 2021-09-15 and 2022-08-03. The fork owner has no source commits.
+- Source file headers, `setup.py`, the Sphinx docs (`docs/conf.py`) and the original README name
+  **Xue Yang / Shanghai Jiao Tong University** as author and maintainer.
+- The project is the code release that accompanies *"AlphaRotate: A Rotation Detection Benchmark using TensorFlow"*
+  (arXiv:2111.06677) and several of its authors' papers (CSL/ECCV'20, DCL/CVPR'21, GWD/ICML'21, KLD/NeurIPS'21, KFIoU, BCD/TPAMI'22, R³Det/AAAI'21).
 
-|   Backbone  |  Neck  |  Training/test dataset  | Data Augmentation | Epoch |  NMS |   
-|:-----------:|:------:|:-----------------------:|:-----------------:|:-----:|:----:|
-| ResNet50_v1d 600->800 | FPN | trainval/test | × | **13 (AP50) or 17 (AP50:95) is enough for baseline (default is 13)** | **gpu nms (slightly worse <1% than cpu nms but faster)** | 
+**Inferred:**
 
-| Method | Baseline |    DOTA1.0  |   DOTA1.5   |   DOTA2.0   | Model | Anchor | Angle Pred. | Reg. Loss| Angle Range | Configs |      
-|:------------:|:------------:|:-----------:|:----------:|:-----------:|:----------:|:-----------:|:-----------:|:-----------:|:---------:|:---------:|    
-| - | [RetinaNet-R](https://arxiv.org/abs/1908.05612) | 67.25 | 56.50 | 42.04 | [Baidu Drive (bi8b)](https://pan.baidu.com/s/1s9bdXWhx307Egdnmz0hLBw) | **R** | Reg. (∆⍬) | smooth L1 | [-90,0)  | [dota1.0,](./configs/DOTA/retinanet/cfgs_res50_dota_v7.py) [dota1.5,](./configs/DOTA1.5/retinanet/cfgs_res50_dota1.5_v7.py) [dota2.0](./configs/DOTA2.0/retinanet/cfgs_res50_dota2.0_v7.py) |
-| - | [RetinaNet-H](https://arxiv.org/abs/1908.05612) | 64.17 | 56.10 | 43.06 | [Baidu Drive (bi8b)](https://pan.baidu.com/s/1s9bdXWhx307Egdnmz0hLBw) | H | Reg. (∆⍬) | smooth L1 | **[-90,90)**  | [dota1.0,](./configs/DOTA/retinanet/cfgs_res50_dota_v15.py) [dota1.5,](./configs/DOTA1.5/retinanet/cfgs_res50_dota1.5_v15.py) [dota2.0](./configs/DOTA2.0/retinanet/cfgs_res50_dota2.0_v15.py) |
-| - | [RetinaNet-H](https://arxiv.org/abs/1908.05612) | 65.33 | 57.21 | 44.58 | [Baidu Drive (bi8b)](https://pan.baidu.com/s/1s9bdXWhx307Egdnmz0hLBw) | H | Reg. **(sin⍬, cos⍬)** | smooth L1 | [-90,90)  | [dota1.0,](./configs/DOTA/retinanet/cfgs_res50_dota_atan_v5.py) [dota1.5,](./configs/DOTA1.5/retinanet/cfgs_res50_dota1.5_atan_v5.py) [dota2.0](./configs/DOTA2.0/retinanet/cfgs_res50_dota2.0_atan_v5.py) |
-| - | [RetinaNet-H](https://arxiv.org/abs/1908.05612) | 65.73 | 58.87 | 44.16 | [Baidu Drive (bi8b)](https://pan.baidu.com/s/1s9bdXWhx307Egdnmz0hLBw) | H | Reg. (∆⍬) | smooth L1 | **[-90,0)**  | [dota1.0,](./configs/DOTA/retinanet/cfgs_res50_dota_v4.py) [dota1.5,](./configs/DOTA1.5/retinanet/cfgs_res50_dota1.5_v4.py) [dota2.0](./configs/DOTA2.0/retinanet/cfgs_res50_dota2.0_v4.py)|
-| [IoU-Smooth L1](https://arxiv.org/abs/1811.07126) | [RetinaNet-H](https://arxiv.org/abs/1908.05612) | 66.99 | 59.17 | 46.31 | [Baidu Drive (qcvc)](https://pan.baidu.com/s/1NmiEzQmiYi7H0OJMqoryqQ) | H | Reg. (∆⍬) | **iou-smooth L1** | [-90,0)  | [dota1.0,](./configs/DOTA/retinanet/cfgs_res50_dota_v5.py) [dota1.5,](./configs/DOTA1.5/retinanet/cfgs_res50_dota1.5_v5.py) [dota2.0](./configs/DOTA2.0/retinanet/cfgs_res50_dota2.0_v5.py) |
-| [RIDet](https://arxiv.org/abs/2103.11636) | [RetinaNet-H](https://arxiv.org/abs/1908.05612) | 66.06 | 58.91 | 45.35 | [Baidu Drive (njjv)](https://pan.baidu.com/s/1w3qech_ZmYESVxoiaTbBSw) | H | Quad. | hungarian loss | -  | [dota1.0,](./configs/DOTA/ridet/cfgs_res50_dota_ridet_8p_v1.py) [dota1.5,](./configs/DOTA1.5/ridet/cfgs_res50_dota1.5_ridet_8p_v1.py) [dota2.0](./configs/DOTA2.0/ridet/cfgs_res50_dota2.0_ridet_8p_v1.py) |
-| [RSDet](https://arxiv.org/pdf/1911.08299) | [RetinaNet-H](https://arxiv.org/abs/1908.05612) | 67.27 | 61.42 | 46.71 | [Baidu Drive (2a1f)](https://pan.baidu.com/s/1m8pSOZX50_Bsv-WuJKo_DQ) | H | Quad. | modulated loss | -  | [dota1.0,](./configs/DOTA/rsdet/cfgs_res50_dota_rsdet_v2.py) [dota1.5,](./configs/DOTA1.5/rsdet/cfgs_res50_dota1.5_rsdet_8p_v2.py) [dota2.0](./configs/DOTA2.0/rsdet/cfgs_res50_dota2.0_rsdet_8p_v2.py) |
-| [CSL](https://arxiv.org/abs/2003.05597) | [RetinaNet-H](https://arxiv.org/abs/1908.05612) | 67.38 | 58.55 | 43.34 | [Baidu Drive (sdbb)](https://pan.baidu.com/s/1ULnKq0sh1LtjF46YPP4iKA) | H | **Cls.: Gaussian (r=1, w=10)** | smooth L1 | [-90,90) | [dota1.0,](./configs/DOTA/csl/cfgs_res50_dota_v45.py) [dota1.5,](./configs/DOTA1.5/csl/cfgs_res50_dota1.5_csl_v45.py) [dota2.0](./configs/DOTA2.0/csl/cfgs_res50_dota2.0_csl_v45.py) |
-| [DCL](https://arxiv.org/abs/2011.09670) | [RetinaNet-H](https://arxiv.org/abs/1908.05612) | 67.39 | 59.38 | 45.46 | [Baidu Drive (m7pq)](https://pan.baidu.com/s/1lrdPZm1hVfupPrTnB8cYjw) | H | **Cls.: BCL (w=180/256)** | smooth L1 | [-90,90)  | [dota1.0,](./configs/DOTA/dcl/cfgs_res50_dota_dcl_v5.py) [dota1.5,](./configs/DOTA1.5/dcl/cfgs_res50_dota1.5_dcl_v5.py) [dota2.0](./configs/DOTA2.0/dcl/cfgs_res50_dota2.0_dcl_v5.py) |
-| - | [FCOS](https://arxiv.org/abs/1904.01355) | 67.69 | 61.05 | 48.10 | [Baidu Drive (pic4)](https://pan.baidu.com/s/1Ge0RnMHIp3NIfqGAzZZkkA) | - | Quad | smooth L1 | -  | [dota1.0,](./configs/DOTA/fcos/cfgs_res50_dota_fcos_v1.py) [dota1.5,](./configs/DOTA1.5/fcos/cfgs_res50_dota1.5_fcos_v1.py) [dota2.0](./configs/DOTA2.0/fcos/cfgs_res50_dota2.0_fcos_v1.py) |
-| [RSDet++](https://arxiv.org/abs/2109.11906) | [FCOS](https://arxiv.org/abs/1904.01355) | 67.91 | 62.18 | 48.81 | [Baidu Drive (8ww5)](https://pan.baidu.com/s/1gH4WT4_ZNyYtUwnuZM5iUg) | - | Quad | modulated loss | -  | [dota1.0,](./configs/DOTA/fcos/cfgs_res50_dota_fcos_v3.py) [dota1.5](./configs/DOTA1.5/fcos/cfgs_res50_dota1.5_fcos_v2.py) [dota2.0](./configs/DOTA2.0/fcos/cfgs_res50_dota2.0_fcos_v2.py) |
-| [GWD](https://arxiv.org/abs/2101.11952) | [RetinaNet-H](https://arxiv.org/abs/1908.05612) | 68.93 | 60.03 | 46.65 | [Baidu Drive (7g5a)](https://pan.baidu.com/s/1D1pSOoq35lU3OkkUhErLBw) | H | Reg. (∆⍬) | **gwd** | [-90,0)  | [dota1.0,](./configs/DOTA/gwd/cfgs_res50_dota_v10.py) [dota1.5,](./configs/DOTA1.5/gwd/cfgs_res50_dota1.5_v11.py) [dota2.0](./configs/DOTA2.0/gwd/cfgs_res50_dota2.0_v11.py) |
-| [GWD](https://arxiv.org/abs/2101.11952) **[+ SWA](https://arxiv.org/pdf/2012.12645.pdf)**  | [RetinaNet-H](https://arxiv.org/abs/1908.05612) |  69.92 | 60.60 | 47.63 | [Baidu Drive (qcn0)](https://pan.baidu.com/s/1kZ2kCMIwJSODgfayypTMNw) | H | Reg. (∆⍬) | gwd | [-90,0)  | [dota1.0,](./configs/DOTA/gwd/cfgs_res50_dota_v10.py) [dota1.5,](./configs/DOTA1.5/gwd/cfgs_res50_dota1.5_v11.py) [dota2.0](./configs/DOTA2.0/gwd/cfgs_res50_dota2.0_v11.py) |
-| [BCD]() | [RetinaNet-H](https://arxiv.org/abs/1908.05612) | 71.23 | 60.78 | 47.48 | [Baidu Drive (0puk)](https://pan.baidu.com/s/1Yn6xkNlJy-jtMXOY0VKdAA) | H | Reg. (∆⍬) | **bcd** | [-90,0) | [dota1.0,](./configs/DOTA/bcd/cfgs_res50_dota_bcd_v3.py) [dota1.5,](./configs/DOTA1.5/bcd/cfgs_res50_dota1.5_bcd_v6.py) [dota2.0](./configs/DOTA2.0/bcd/cfgs_res50_dota2.0_bcd_v6.py) |
-| [KLD](https://arxiv.org/abs/2106.01883) | [RetinaNet-H](https://arxiv.org/abs/1908.05612) | 71.28 | 62.50 | 47.69 | [Baidu Drive (o6rv)](https://pan.baidu.com/s/1nymEcwYEWoW4vcIxCYEsyw) | H | Reg. (∆⍬) | **kld** | [-90,0) | [dota1.0,](./configs/DOTA/kl/cfgs_res50_dota_kl_v5.py) [dota1.5,](./configs/DOTA1.5/kl/cfgs_res50_dota1.5_kl_v6.py) [dota2.0](./configs/DOTA2.0/kl/cfgs_res50_dota2.0_kl_v5.py) |
-| [KFIoU](https://arxiv.org/abs/2201.12558) | [RetinaNet-H](https://arxiv.org/abs/1908.05612) | 70.64 | 62.71 | 48.04 | [Baidu Drive (o72o)](https://pan.baidu.com/s/1MD-N2XGZ10r2HxSJ8PikUQ) | H | Reg. (∆⍬) | **kfiou** | [-90,0) | [dota1.0,](./configs/DOTA/kfiou/cfgs_res50_dota_kf_v3.py) [dota1.5,](./configs/DOTA1.5/kfiou/cfgs_res50_dota1.5_kf_v3.py) [dota2.0](./configs/DOTA2.0/kfiou/cfgs_res50_dota2.0_kf_v3.py) |
-| [R<sup>3</sup>Det](https://arxiv.org/abs/1908.05612) | [RetinaNet-H](https://arxiv.org/abs/1908.05612) | 70.66 | 62.91 | 48.43 | [Baidu Drive (n9mv)](https://pan.baidu.com/s/1mCKXkTgyBUzmEJz5sng0UA) | H->R | Reg. (∆⍬) | smooth L1 | [-90,0)  | [dota1.0,](./configs/DOTA/r3det/cfgs_res50_dota_r3det_v1.py) [dota1.5,](./configs/DOTA1.5/r3det/cfgs_res50_dota1.5_r3det_v1.py) [dota2.0](./configs/DOTA2.0/r3det/cfgs_res50_dota2.0_r3det_v1.py) |
-| [DCL](https://arxiv.org/abs/2011.09670) | [R<sup>3</sup>Det](https://arxiv.org/abs/1908.05612) | 71.21 | 61.98 | 48.71 | [Baidu Drive (eg2s)](https://pan.baidu.com/s/18M0JJ-PBpauPzoImigweyw) | H->R | **Cls.: BCL (w=180/256)** | iou-smooth L1 | [-90,0)->[-90,90)  | [dota1.0,](./configs/DOTA/r3det_dcl/cfgs_res50_dota_r3det_dcl_v1.py) [dota1.5,](./configs/DOTA1.5/r3det_dcl/cfgs_res50_dota1.5_r3det_dcl_v2.py) [dota2.0](./configs/DOTA2.0/r3det_dcl/cfgs_res50_dota2.0_r3det_dcl_v2.py) |
-| [GWD](https://arxiv.org/abs/2101.11952) | [R<sup>3</sup>Det](https://arxiv.org/abs/1908.05612) | 71.56 | 63.22 | 49.25 | [Baidu Drive (jb6e)](https://pan.baidu.com/s/1DmluE1rOs377bZQMT2Y0tg) | H->R | Reg. (∆⍬) | **smooth L1->gwd** | [-90,0)  | [dota1.0,](./configs/DOTA/r3det_gwd/cfgs_res50_dota_r3det_gwd_v6.py) [dota1.5,](./configs/DOTA1.5/r3det_gwd/cfgs_res50_1.5_dota_r3det_gwd_v6.py) [dota2.0](./configs/DOTA2.0/r3det_gwd/cfgs_res50_2.0_dota_r3det_gwd_v6.py) |
-| [BCD]() | [R<sup>3</sup>Det](https://arxiv.org/abs/1908.05612) | 72.22 | 63.53 | 49.71 | [Baidu Drive (v60g)](https://pan.baidu.com/s/1zlwpt6ptCnzTsJzNJyQaHQ) | H->R | Reg. (∆⍬) | **bcd** | [-90,0)  | [dota1.0,](./configs/DOTA/r3det_bcd/cfgs_res50_dota_r3det_bcd_v2.py) [dota1.5,](./configs/DOTA1.5/r3det_bcd/cfgs_res50_dota1.5_r3det_bcd_v2.py) [dota2.0](./configs/DOTA2.0/r3det_bcd/cfgs_res50_dota2.0_r3det_bcd_v2.py) |
-| [KLD](https://arxiv.org/abs/2106.01883) | [R<sup>3</sup>Det](https://arxiv.org/abs/1908.05612) | 71.73 | 65.18 | 50.90 | [Baidu Drive (tq7f)](https://pan.baidu.com/s/1ORscIxy4ccx_bj4knJk1qw) | H->R | Reg. (∆⍬) | **kld** | [-90,0)  | [dota1.0,](./configs/DOTA/r3det_kl/cfgs_res50_dota_r3det_kl_v2.py) [dota1.5,](./configs/DOTA1.5/r3det_kl/cfgs_res50_dota1.5_r3det_kl_v2.py) [dota2.0](./configs/DOTA2.0/r3det_kl/cfgs_res50_dota2.0_r3det_kl_v2.py) |
-| [KFIoU](https://arxiv.org/abs/2201.12558) | [R<sup>3</sup>Det](https://arxiv.org/abs/1908.05612) | 72.28 | 64.69 | 50.41 | [Baidu Drive (u77v)](https://pan.baidu.com/s/1n5eqqqE0j3dhYgXM-4_k5A) | H->R | Reg. (∆⍬) | **kfiou** | [-90,0)  | [dota1.0,](./configs/DOTA/r3det_kfiou/cfgs_res50_dota_r3det_kf_v5.py) [dota1.5,](./configs/DOTA1.5/r3det_kfiou/cfgs_res50_dota1.5_r3det_kf_v4.py) [dota2.0](./configs/DOTA2.0/r3det_kfiou/cfgs_res50_dota2.0_r3det_kf_v4.py) |
-| - | [R<sup>2</sup>CNN (Faster-RCNN)](https://arxiv.org/abs/1706.09579) | 72.27 | 66.45 | 52.35 | [Baidu Drive (02s5)](https://pan.baidu.com/s/1tdIc2IUouVwrwUSIbNdvWg) | H->R | Reg. (∆⍬) | smooth L1 | [-90,0)  | [dota1.0,](./configs/DOTA/r2cnn/cfgs_res50_dota_v1.py) [dota1.5](./configs/DOTA1.5/r2cnn/cfgs_res50_dota1.5_r2cnn_v1.py) [dota2.0](./configs/DOTA2.0/r2cnn/cfgs_res50_dota2.0_r2cnn_v1.py) |
+- This repository is a GitHub **fork** kept by the owner as a reference copy of the benchmark, likely for study or
+  experimentation with rotated object detection.
 
-**SOTA**    
+**Unknown:**
 
-| Method | Backbone  | DOTA1.0 | Model | MS | Data Augmentation | Epoch | Configs |
-|:-----------:|:-----------:|:----------:|:----------:|:----------:|:-----------:|:----------:|:-----------:|
-| R<sup>2</sup>CNN-BCD | ResNet152_v1d-FPN | 79.54 | [Baidu Drive (h2u1)](https://pan.baidu.com/s/1HFTUmXynTEaTGxmwFgpo2A) | √ | √ | 34 | [dota1.0](./configs/DOTA/r2cnn_bcd/cfgs_res152_dota_r2cnn_bcd_v4.py) |
-| RetinaNet-BCD | ResNet152_v1d-FPN | 78.52 | [Baidu Drive (0puk)](https://pan.baidu.com/s/1Yn6xkNlJy-jtMXOY0VKdAA) |  √ | √ | 51 | [dota1.0](./configs/DOTA/bcd/cfgs_res152_dota_bcd_v5.py) |
-| R<sup>3</sup>Det-BCD | ResNet50_v1d-FPN | 79.08 | [Baidu Drive (v60g)](https://pan.baidu.com/s/1zlwpt6ptCnzTsJzNJyQaHQ) | √ | √ | 51 | [dota1.0](./configs/DOTA/r3det_bcd/cfgs_res50_dota_r3det_bcd_v6.py) |
-| R<sup>3</sup>Det-BCD | ResNet152_v1d-FPN | 79.95 | [Baidu Drive (v60g)](https://pan.baidu.com/s/1zlwpt6ptCnzTsJzNJyQaHQ) | √ | √ | 51 | [dota1.0](./configs/DOTA/r3det_bcd/cfgs_res152_dota_r3det_bcd_v3.py) |
+- The original repository does not provide enough information to determine why the fork was made, or whether it was
+  used for a specific course, thesis or personal experiment. No fork-specific documents, results or code changes exist.
 
-**Note:**    
-- Single GPU training: [SAVE_WEIGHTS_INTE](./configs/cfgs.py) = iter_epoch * 1 (DOTA1.0: iter_epoch=27000, DOTA1.5: iter_epoch=32000, DOTA2.0: iter_epoch=40000)
-- Multi-GPU training (**better**): [SAVE_WEIGHTS_INTE](./configs/cfgs.py) = iter_epoch * 2
+See [`docs/project-context.md`](./docs/project-context.md) for the full evidence.
 
-## My Development Environment 
-- python3.5 (anaconda recommend)
-- cuda 10.0
-- opencv-python 4.1.1.26 (important)
-- tfplot 0.2.0 (optional)
-- tensorflow-gpu 1.13
-- tqdm 4.54.0
-- Shapely 1.7.1
+## Problem Statement
 
-## Installation
-### Manual configuration (cuda version < 11)
+Rotated object detection has specific problems that horizontal detection does not have. The upstream code explicitly
+targets these:
+
+- **Angle boundary discontinuity.** Regressing θ directly produces large losses at the edges of the angle range
+  (for example −90° vs. 89°). CSL and DCL address this by treating the angle as a classification problem.
+- **Mismatch between loss and metric.** Smooth-L1 on `(x, y, w, h, θ)` does not track rotated IoU. GWD, KLD, KFIoU and
+  BCD address this by modelling boxes as 2-D Gaussian distributions and computing distances between them.
+- **Square-like objects and ordering ambiguity** for quadrilateral representations (RSDet with modulated loss, RIDet).
+- **The absence of a unified, fair benchmark** for comparing these methods under identical settings.
+
+## Objective
+
+According to the upstream documentation (`docs/index.rst`), the project was developed to:
+
+1. provide **modules** for building rotation-detection algorithms;
+2. provide **implementations** of state-of-the-art rotation-detection methods;
+3. **benchmark** existing algorithms under identical datasets and experimental settings, so they can be compared fairly.
+
+## Repository Structure
+
+```
+RotationDetection/
+├── README.md                 ← this file (new)
+├── AGENTS.md                 ← guardrails for AI-assisted work on this repo (new)
+├── LICENSE                   ← Apache-2.0 (original)
+├── setup.py, MANIFEST.in     ← package build incl. CUDA/Cython extensions (original)
+├── requirements.txt          ← (original)
+│
+├── alpharotate/              ← core library (original)
+│   ├── libs/models/          ← backbones, necks, anchor heads, samplers, detectors, losses
+│   ├── libs/utils/           ← box transforms, rotated IoU/NMS (Python, Cython, CUDA), drawing
+│   ├── libs/val_libs/        ← VOC-style evaluation (horizontal and rotated)
+│   ├── libs/label_name_dict/ ← class-name ↔ id maps per dataset
+│   └── utils/                ← standalone implementations: CSL, DCL, GWD, KLD, KF, BCD, Gaussian metrics
+│
+├── configs/                  ← experiment configs: configs/<DATASET>/<detector>/cfgs_*.py + _base_/
+├── dataloader/               ← dataset conversion (→ XML → TFRecord), TFRecord reader, augmentation
+├── tools/                    ← per-detector train / test / export scripts + shared *_base.py runners
+├── demo/                     ← video ↔ frame utilities for making demo videos
+├── thirdparty/               ← DOTA devkit, ICDAR/MSRA-TD500 devkit, gluon2TF weight converter
+├── output/trained_weights/   ← placeholder where trained checkpoints are expected
+├── images/                   ← figures used by the original README, Sphinx docs and code docstrings
+│
+└── docs/
+    ├── README.md             ← documentation index (new)
+    ├── project-context.md    ← origin, evidence, timeline (new)
+    ├── architecture.md       ← how the components fit together (new)
+    ├── code-overview.md      ← what each package / script does (new)
+    ├── usage.md              ← workflow as documented upstream (new)
+    ├── possible-improvements.md ← observations, NOT applied (new)
+    ├── sdlc/                 ← intent.md, spec.md, plan.md (new, reverse-engineered)
+    ├── examples/example.xml  ← annotation-format sample (moved from repository root)
+    ├── original/             ← original upstream README and OTHERS.md (moved, content unchanged)
+    └── *.rst, conf.py, api/, guide/, images/ ← original Sphinx documentation (unchanged)
+```
+
+Code directories were intentionally **not** moved into a `src/` folder. The scripts use relative imports and paths
+(`sys.path.append("../../")`, `ROOT_PATH = os.path.abspath('../../')`, `'../../dataloader/tfrecord'`). Moving them
+would break the original implementation. See [`docs/sdlc/plan.md`](./docs/sdlc/plan.md) for every decision made.
+
+## Original Implementation
+
+This repository preserves the original implementation of the project. The source code has intentionally not been
+refactored or modernized in order to retain the historical context and original development approach.
+
+The source code was written by the upstream AlphaRotate authors and is kept byte-for-byte as it was at upstream commit
+`6adfd2d`. The reorganization only added Markdown documentation, moved three non-code documents, and removed
+macOS `.DS_Store` metadata files.
+
+## Technologies
+
+Identified directly from `setup.py`, `requirements.txt`, imports and the original README:
+
+| Area | Technology |
+|---|---|
+| Language | Python 3 (upstream environment: Python 3.5), C++, CUDA, Cython |
+| Deep learning | TensorFlow-GPU 1.13.1 (`tf.contrib.slim`, `tf.py_func`, TFRecord queues) |
+| Numerics / geometry | NumPy, OpenCV 4.1.1.26, Shapely 1.7.1 |
+| Build | setuptools + Cython `build_ext` with a custom `nvcc` compiler hook |
+| Tooling | tqdm, TensorBoard, optional `tfplot`; SWIG for the DOTA devkit |
+| Pre-trained weights | TF-slim checkpoints, GluonCV (MXNet) weights converted with `thirdparty/gluon2TF`, PyTorch weights converted with MMdnn |
+| Docs | Sphinx + `sphinx_rtd_theme` + `m2r2` (Read the Docs) |
+| Upstream runtime | CUDA 10.0; a Docker image `yangxue2docker/yx-tf-det:tensorflow1.13.1-cuda10-gpu-py3` is referenced |
+
+## How It Works
+
+1. **Prepare data.** Dataset-specific scripts in `dataloader/dataset/<DATASET>/` crop large images (DOTA) and convert
+   annotations to a VOC-like XML format with 4-point boxes (see [`docs/examples/example.xml`](./docs/examples/example.xml)).
+   `convert_data_to_tfrecord.py` then packs images and boxes into TFRecords.
+2. **Select an experiment.** Copy a config from `configs/<DATASET>/<detector>/cfgs_*.py` over `configs/cfgs.py`.
+   Every config builds on `configs/_base_/` (model, dataset, schedule) and usually ends with a docstring recording the
+   upstream authors' DOTA evaluation result.
+3. **Train.** `tools/<detector>/train.py` subclasses `tools/train_base.Train`, builds the detector graph
+   (`alpharotate/libs/models/detectors/<detector>/build_whole_network.py`), splits batches across GPUs, averages gradients and
+   writes checkpoints and TensorBoard summaries to `output/`.
+4. **Test and evaluate.** `tools/<detector>/test_<dataset>.py` runs multi-GPU inference, optionally with multi-scale or
+   flip test-time augmentation. Results are merged with rotated NMS, then evaluated with the VOC-style rotated metric in
+   `alpharotate/libs/val_libs/` or exported in the DOTA / ICDAR submission format.
+
+Details: [`docs/architecture.md`](./docs/architecture.md).
+
+## Inputs and Outputs
+
+| Kind | Location / format |
+|---|---|
+| Raw datasets (not included) | External paths, for example `/data/dataset/DOTA/...` hard-coded as script defaults |
+| Intermediate annotations | VOC-style XML with `x0..y3` polygon vertices |
+| Training input | `dataloader/tfrecord/<DATASET>_train*.tfrecord` (git-ignored) |
+| Pre-trained backbones (not included) | `dataloader/pretrained_weights/` |
+| Checkpoints (not included) | `output/trained_weights/<VERSION>/` |
+| TensorBoard logs | `output/summary/<VERSION>/` |
+| Test outputs | `tools/<detector>/test_<dataset>/<VERSION>/` (per-class DOTA txt files, visualizations) |
+| Included ground-truth archives | `dataloader/dataset/{ICDAR2015,MSRA-TD500}/gt.zip`, `dataloader/dataset/Total_Text/labels.zip` |
+
+## Running the Project
+
+No execution was attempted during the reorganization. The dependencies (TensorFlow 1.13, CUDA 10, Python 3.5) are
+end-of-life and need an NVIDIA GPU. The steps below are **the upstream authors' documented procedure**, and have not
+been verified for this fork:
+
 ```shell
 pip install -r requirements.txt
-pip install -v -e .  # or "python setup.py develop"
+pip install -v -e .          # compiles the Cython/CUDA extensions; requires nvcc on PATH or $CUDAHOME
+
+cd dataloader/dataset/DOTA && python data_crop.py
+cd dataloader/dataset && python convert_data_to_tfrecord.py --root_dir=/PATH/TO/DOTA/ --dataset=DOTA ...
+
+cd tools/retinanet && python train.py
+cd tools/retinanet && python test_dota.py --test_dir=/PATH/TO/IMAGES/ --gpus=0
 ```
 
-Or, you can simply install AlphaRotate with the following command:
+Full walkthrough with caveats: [`docs/usage.md`](./docs/usage.md).
 
-```shell
-pip install alpharotate  # Not suitable for dev.
-```
+## Documentation
 
-### Docker (cuda version < 11)
-**docker images: yangxue2docker/yx-tf-det:tensorflow1.13.1-cuda10-gpu-py3**        
+| Document | Purpose |
+|---|---|
+| [docs/README.md](./docs/README.md) | Documentation index |
+| [docs/project-context.md](./docs/project-context.md) | Origin, evidence, timeline, classification |
+| [docs/architecture.md](./docs/architecture.md) | Component relationships and the training / inference data flow |
+| [docs/code-overview.md](./docs/code-overview.md) | Package-by-package and script-by-script description |
+| [docs/usage.md](./docs/usage.md) | Install, data preparation, training, testing, as documented upstream |
+| [docs/possible-improvements.md](./docs/possible-improvements.md) | Observed issues and modernization ideas (not applied) |
+| [docs/sdlc/intent.md](./docs/sdlc/intent.md) · [spec.md](./docs/sdlc/spec.md) · [plan.md](./docs/sdlc/plan.md) | Reverse-engineered intent, specification and the reorganization plan |
+| [docs/original/](./docs/original/) | Original upstream README (with benchmark tables and model links) and OTHERS.md |
+| `docs/index.rst` + `docs/guide/` | Original Sphinx / Read the Docs sources |
 
-**Note: For 30xx series graphics cards (cuda version >= 11), I recommend this [blog](https://blog.csdn.net/qq_39543404/article/details/112171851) to install tf1.xx, or download image from [tensorflow-release-notes](https://docs.nvidia.com/deeplearning/frameworks/tensorflow-release-notes/rel_20-11.html#rel_20-11) according to your development environment, e.g. nvcr.io/nvidia/tensorflow:20.11-tf1-py3**
+## Citation and Attribution
 
-```shell
-cd alpharotate/libs/utils/cython_utils
-rm *.so
-rm *.c
-rm *.cpp
-python setup.py build_ext --inplace (or make)
+All credit for the implementation belongs to the upstream authors. If you use this code, cite the original work:
 
-cd alpharotate/libs/utils/
-rm *.so
-rm *.c
-rm *.cpp
-python setup.py build_ext --inplace
-```
-
-## Download Model
-### Pretrain weights
-Download a pretrain weight you need from the following three options, and then put it to $PATH_ROOT/dataloader/pretrained_weights. 
-1. MxNet pretrain weights **(recommend in this repo, default in [NET_NAME](./configs/_base_/models/retinanet_r50_fpn.py))**: resnet_v1d, resnet_v1b, refer to [gluon2TF](./thirdparty/gluon2TF/README.md).    
-* [Baidu Drive (5ht9)](https://pan.baidu.com/s/1GpqKg0dOaaWmwshvv1qWGg)          
-* [Google Drive](https://drive.google.com/drive/folders/1BM8ffn1WnsRRb5RcuAcyJAHX8NS2M1Gz?usp=sharing)  
-2. Tensorflow pretrain weights: [resnet50_v1](http://download.tensorflow.org/models/resnet_v1_50_2016_08_28.tar.gz), [resnet101_v1](http://download.tensorflow.org/models/resnet_v1_101_2016_08_28.tar.gz), [resnet152_v1](http://download.tensorflow.org/models/resnet_v1_152_2016_08_28.tar.gz), [efficientnet](https://github.com/tensorflow/tpu/tree/master/models/official/efficientnet), [mobilenet_v2](https://storage.googleapis.com/mobilenet_v2/checkpoints/mobilenet_v2_1.0_224.tgz), darknet53 ([Baidu Drive (1jg2)](https://pan.baidu.com/s/1p8V9aaivo9LNxa_OjXjUwA), [Google Drive](https://drive.google.com/drive/folders/1zyg1bvdmLxNRIXOflo_YmJjNJdpHX2lJ?usp=sharing)).      
-3. Pytorch pretrain weights, refer to [pretrain_zoo.py](./dataloader/pretrained_weights/pretrain_zoo.py) and [Others](./OTHERS.md).
-* [Baidu Drive (oofm)](https://pan.baidu.com/s/16nHwlkPsszBvzhMv4h2IwA)          
-* [Google Drive](https://drive.google.com/drive/folders/14Bx6TK4LVadTtzNFTQj293cKYk_5IurH?usp=sharing)      
-
-
-### Trained weights
-1. Please download trained models by this project, then put them to $PATH_ROOT/output/pretained_weights.
-
-## Train 
-
-1. If you want to train your own dataset, please note:  
-    ```
-    (1) Select the detector and dataset you want to use, and mark them as #DETECTOR and #DATASET (such as #DETECTOR=retinanet and #DATASET=DOTA)
-    (2) Modify parameters (such as CLASS_NUM, DATASET_NAME, VERSION, etc.) in $PATH_ROO./configs/#DATASET/#DETECTOR/cfgs_xxx.py
-    (3) Copy $PATH_ROO./configs/#DATASET/#DETECTOR/cfgs_xxx.py to $PATH_ROO./configs/cfgs.py
-    (4) Add category information in $PATH_ROOT/libs/label_name_dict/label_dict.py     
-    (5) Add data_name to $PATH_ROOT/dataloader/dataset/read_tfrecord.py  
-    ```     
-
-2. Make tfrecord       
-    If image is very large (such as DOTA dataset), the image needs to be cropped. Take DOTA dataset as a example:      
-    ```  
-    cd $PATH_ROOT/dataloader/dataset/DOTA
-    python data_crop.py
-    ```  
-    If image does not need to be cropped, just convert the annotation file into xml format, refer to [example.xml](./example.xml).
-    ```  
-    cd $PATH_ROOT/dataloader/dataset/  
-    python convert_data_to_tfrecord.py --root_dir='/PATH/TO/DOTA/' 
-                                       --xml_dir='labeltxt'
-                                       --image_dir='images'
-                                       --save_name='train' 
-                                       --img_format='.png' 
-                                       --dataset='DOTA'
-    ```      
-    
-
-3. Start training
-    ```  
-    cd $PATH_ROOT/tools/#DETECTOR
-    python train.py
-    ```
-
-## Test
-1. For large-scale image, take DOTA dataset as a example (the output file or visualization is in $PATH_ROOT/tools/#DETECTOR/test_dota/VERSION): 
-    ```  
-    cd $PATH_ROOT/tools/#DETECTOR
-    python test_dota.py --test_dir='/PATH/TO/IMAGES/'  
-                        --gpus=0,1,2,3,4,5,6,7  
-                        -ms (multi-scale testing, optional)
-                        -s (visualization, optional)
-    
-    or (recommend in this repo, better than multi-scale testing)
-    
-    python test_dota_sota.py --test_dir='/PATH/TO/IMAGES/'  
-                             --gpus=0,1,2,3,4,5,6,7  
-                             -s (visualization, optional)
-    ``` 
-
-    **Notice: In order to set the breakpoint conveniently, the read and write mode of the file is' a+'. If the model of the same #VERSION needs to be tested again, the original test results need to be deleted.**
-
-2. For small-scale image, take HRSC2016 dataset as a example: 
-    ```  
-    cd $PATH_ROOT/tools/#DETECTOR
-    python test_hrsc2016.py --test_dir='/PATH/TO/IMAGES/'  
-                            --gpu=0
-                            --image_ext='bmp'
-                            --test_annotation_path='/PATH/TO/ANNOTATIONS'
-                            -s (visualization, optional)
-    ``` 
-
-## Tensorboard
-```  
-cd $PATH_ROOT/output/summary
-tensorboard --logdir=.
-``` 
-
-![1](./images/images.png)
-
-![2](./images/scalars.png)
-
-## Citation
-
-If you find our code useful for your research, please consider cite.
-
-```
+```bibtex
 @article{yang2021alpharotate,
     author  = {Yang, Xue and Zhou, Yue and Yan, Junchi},
     title   = {AlphaRotate: A Rotation Detection Benchmark using TensorFlow},
     journal = {arXiv preprint arXiv:2111.06677},
     year    = {2021},
 }
-
 ```
 
-## Reference
-1、https://github.com/endernewton/tf-faster-rcnn   
-2、https://github.com/zengarden/light_head_rcnn   
-3、https://github.com/tensorflow/models/tree/master/research/object_detection    
-4、https://github.com/fizyr/keras-retinanet     
+The upstream project has since been superseded by the PyTorch-based [MMRotate](https://github.com/open-mmlab/mmrotate),
+as its own README announces.
 
+## Historical Note
 
+This repository was later reorganized and documented to improve readability and preserve the historical context of
+the original project. The original source code remains unchanged.
